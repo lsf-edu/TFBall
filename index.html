@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TFBall - Gestion de Tournois</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">TFBall Manager</div>
+        <div class="actions">
+            <button id="notificationButton" class="icon-button" title="Notifications">
+                🔔
+                <span id="notificationBadge" class="badge hidden">0</span>
+            </button>
+            <button id="resetDbButton" class="secondary danger" title="Vider la base de données">Réinitialiser</button>
+            <button id="openCreateButton" class="primary">Créer un tournoi</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panel panel--compact">
+            <h2>Mes Tournois</h2>
+            <div class="toolbar">
+                <label for="statusFilter">Filtrer</label>
+                <select id="statusFilter">
+                    <option value="all">Tous</option>
+                    <option value="Ouvert">Ouvert</option>
+                    <option value="En cours">En cours</option>
+                    <option value="Terminé">Terminé</option>
+                    <option value="Championship">Championnat</option>
+                    <option value="Knockout">Élimination directe</option>
+                    <option value="GroupKnockout">Phase de groupe + élimination</option>
+                </select>
+                <button id="refreshButton" class="secondary">Actualiser</button>
+            </div>
+            <div class="table-responsive">
+                <table id="tournamentsTable">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Équipes</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel panel--accent" id="summaryPanel">
+            <h2>Résumé du tournoi sélectionné</h2>
+            <div class="summary-placeholder">
+                Cliquez sur "Suivre" pour ouvrir le tableau de bord de gestion en modal.
+            </div>
+            <div id="summaryContent">Sélectionnez un tournoi pour voir les détails.</div>
+        </section>
+    </main>
+
+    <div id="notificationStack" class="notification-stack" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="modal hidden" id="notificationModal" aria-hidden="true">
+        <div class="modal__dialog">
+            <div class="modal__header">
+                <h3>Notifications</h3>
+            </div>
+            <div class="modal__body" id="notificationList">
+                <p>Aucune notification pour le moment.</p>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="notificationModal">×</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="tournamentModal" aria-hidden="true">
+        <div class="modal__dialog modal__dialog--wide">
+            <div class="modal__header">
+                <h3>Créer un tournoi professionnel</h3>
+            </div>
+            <div class="modal__body">
+                <form id="tournamentForm">
+                    <div class="form-grid">
+                        <div>
+                            <label for="tournamentName">Nom du tournoi</label>
+                            <input type="text" id="tournamentName" required placeholder="Coupe des Champions" />
+                        </div>
+                        <div>
+                            <label for="tournamentType">Type de tournoi</label>
+                            <select id="tournamentType" required>
+                                <option value="Championship">Championnat</option>
+                                <option value="Knockout">Élimination directe</option>
+                                <option value="GroupKnockout">Phase de groupes + élimination</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="teamCount">Nombre d'équipes</label>
+                            <select id="teamCount" required>
+                                <option value="4">4 équipes</option>
+                                <option value="8" selected>8 équipes</option>
+                                <option value="12">12 équipes</option>
+                                <option value="16">16 équipes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="drawMethod">Méthode de tirage</label>
+                            <select id="drawMethod" required>
+                                <option value="random">Tirage aléatoire</option>
+                                <option value="seeded">Tirage têtes de série</option>
+                                <option value="pots">Tirage par chapeaux</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="tournamentSeason">Saison / Édition</label>
+                            <input type="text" id="tournamentSeason" placeholder="Saison 2026" />
+                        </div>
+                        <div>
+                            <label for="tournamentLogo">Logo du tournoi</label>
+                            <input type="url" id="tournamentLogo" placeholder="https://..." />
+                        </div>
+                    </div>
+
+                    <div id="teamInputs" class="team-inputs"></div>
+
+                    <div class="actions-row">
+                        <button type="button" id="resetButton" class="secondary">Réinitialiser</button>
+                        <button type="submit" class="primary">Créer le tournoi</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="tournamentModal">×</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="summaryModal" aria-hidden="true">
+        <div class="modal__dialog">
+            <div class="modal__header">
+                <h3>Résumé du tournoi</h3>
+            </div>
+            <div class="modal__body" id="summaryModalContent">
+                <p>Chargement...</p>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="summaryModal">×</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="followModal" aria-hidden="true">
+        <div class="modal__dialog modal__dialog--wide">
+            <div class="modal__header header-with-tabs">
+                <div>
+                    <h3>Suivi du tournoi</h3>
+                </div>
+                <div class="tab-nav">
+                    <button class="tab-button active" data-tab="overview" title="Tableau de bord">🏠</button>
+                    <button class="tab-button" data-tab="matchs" title="Matchs">⚽</button>
+                    <button class="tab-button" data-tab="classement" title="Classement">🏆</button>
+                    <button class="tab-button" data-tab="buteur" title="Meilleur buteur">🥇</button>
+                    <button class="tab-button" data-tab="passeur" title="Meilleur passeur">🎯</button>
+                    <button class="tab-button" data-tab="summary" title="Résumé du tournoi">📄</button>
+                    <button class="tab-button" data-tab="press" title="Press et actu">📰</button>
+                </div>
+            </div>
+            <div class="modal__body">
+                <div id="dashboardShell" class="dashboard-shell">
+                    <div id="dashboardBody" class="dashboard-body"></div>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="followModal">×</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="manualScoreModal" aria-hidden="true">
+        <div class="modal__dialog modal__dialog--fullscreen">
+            <div class="modal__header">
+                <h3>En direct <span class="live-badge">LIVE</span></h3>
+            </div>
+            <div class="modal__body">
+                <form id="manualScoreForm" class="manual-score-form live-mode">
+                    <div class="manual-match-info" id="manualScoreInfo">Match en direct</div>
+                    <div class="manual-players-panel">
+                        <div class="team-player-panel">
+                            <div class="team-player-header"><span class="team-title" id="homeTeamTitle">Domicile</span>
+                            </div>
+                            <div class="player-table-container" id="homePlayersContainer"></div>
+                        </div>
+                        <div class="team-player-panel">
+                            <div class="team-player-header"><span class="team-title" id="awayTeamTitle">Extérieur</span>
+                            </div>
+                            <div class="player-table-container" id="awayPlayersContainer"></div>
+                        </div>
+                    </div>
+                    <div class="manual-final-score">
+                        <div class="score-final-header">Score final</div>
+                        <div class="final-score-row">
+                            <div class="score-label" id="finalHomeLabel">Domicile</div>
+                            <input type="number" id="manualScoreHome" min="0" placeholder="0" required />
+                            <span class="score-sep">-</span>
+                            <input type="number" id="manualScoreAway" min="0" placeholder="0" required />
+                            <div class="score-label" id="finalAwayLabel">Extérieur</div>
+                        </div>
+                        <div class="penalty-row">
+                            <label class="penalty-label" for="manualPenaltyHome">Tirs au but</label>
+                            <input type="number" id="manualPenaltyHome" min="0" placeholder="0" />
+                            <span class="score-sep">-</span>
+                            <input type="number" id="manualPenaltyAway" min="0" placeholder="0" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="manualScoreModal">Annuler</button>
+                <button type="submit" class="primary" form="manualScoreForm">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="finalModal" aria-hidden="true">
+        <div class="modal__dialog modal__dialog--narrow">
+            <div class="modal__header">
+                <h3>Félicitations !</h3>
+            </div>
+            <div class="modal__body modal__body--celebration" id="finalMessage">
+                <div class="celebration-icon" aria-hidden="true">🏆</div>
+                <p class="celebration-subtitle">Tournoi terminé</p>
+                <p id="championText" class="celebration-champion"></p>
+                <div class="celebration-confetti" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="animation-stars"></div>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="finalModal">×</button>
+            </div>
+        </div>
+    </div>
+
+    <template id="tournamentRowTemplate">
+        <tr>
+            <td class="name"></td>
+            <td class="type"></td>
+            <td class="teams"></td>
+            <td class="status"></td>
+            <td class="actions"></td>
+        </tr>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
