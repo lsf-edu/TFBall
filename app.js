@@ -858,8 +858,59 @@ async function simulateTournament(tournament) {
     }
 }
 
+function buildCompactSharePayload(tournament) {
+    if (!tournament) return null;
+
+    return {
+        id: tournament.id,
+        name: tournament.name,
+        type: tournament.type,
+        status: tournament.status,
+        season: tournament.season,
+        champion: tournament.champion,
+        teams: (tournament.teams || []).map(team => (typeof team === 'string' ? team : team?.name || team)),
+        table: (tournament.table || []).map(row => ({
+            team: row.team,
+            points: row.points,
+            goalDiff: row.goalDiff,
+            played: row.played,
+            badge: row.badge
+        })),
+        groups: (tournament.groups || []).map(group => ({
+            name: group.name,
+            standings: (group.standings || []).map(row => ({
+                team: row.team,
+                points: row.points,
+                goalDiff: row.goalDiff,
+                played: row.played,
+                badge: row.badge
+            })),
+            rounds: (group.rounds || []).map(round => ({
+                name: round.name,
+                matches: (round.matches || []).map(match => ({
+                    home: match.home,
+                    away: match.away,
+                    scoreHome: match.scoreHome,
+                    scoreAway: match.scoreAway,
+                    groupName: group.name
+                }))
+            }))
+        })),
+        bracket: (tournament.bracket || []).map(round => ({
+            name: round.name,
+            matches: (round.matches || []).map(match => ({
+                home: match.home,
+                away: match.away,
+                scoreHome: match.scoreHome,
+                scoreAway: match.scoreAway
+            }))
+        }))
+    };
+}
+
 function encodeTournamentPayload(tournament) {
-    const json = JSON.stringify(tournament);
+    const payload = buildCompactSharePayload(tournament);
+    const json = JSON.stringify(payload);
     const bytes = new TextEncoder().encode(json);
     let binary = '';
     bytes.forEach(byte => {
@@ -872,7 +923,8 @@ function createExportLink(id, tournament = null) {
     const baseUrl = new URL('manager.html', window.location.href);
     baseUrl.searchParams.set('id', id);
     if (tournament) {
-        baseUrl.searchParams.set('data', encodeTournamentPayload(tournament));
+        const compactPayload = encodeTournamentPayload(tournament);
+        baseUrl.searchParams.set('data', compactPayload);
     }
     return baseUrl.toString();
 }
@@ -1552,11 +1604,11 @@ function renderDashboardStandings(tournament) {
             table.innerHTML = `
                 <thead><tr><th>#</th><th>Équipe</th><th>Pts</th><th>Diff</th><th>J</th><th>🟨</th><th>🟥</th></tr></thead>
                 <tbody>${standings.map((row, index) => {
-                    const badge = row.badge || getBadgeForPosition(index, standings.length, 'GroupKnockout');
-                    const tag = index < 2 ? '<span class="standing-tag standing-tag--qualified">Qualifié</span>' : index >= standings.length - 2 ? '<span class="standing-tag standing-tag--eliminated">Éliminé</span>' : '<span class="standing-tag standing-tag--middle">À suivre</span>';
-                    const cards = getTeamDisciplinaryStats(tournament, row.team);
-                    return `<tr class="${badge}"><td>${index + 1}</td><td>${renderTeamLabel(row.team, tournament)} ${tag}</td><td>${row.points}</td><td>${row.goalDiff}</td><td>${row.played}</td><td>${cards.yellow}</td><td>${cards.red}</td></tr>`;
-                }).join('')}</tbody>
+                const badge = row.badge || getBadgeForPosition(index, standings.length, 'GroupKnockout');
+                const tag = index < 2 ? '<span class="standing-tag standing-tag--qualified">Qualifié</span>' : index >= standings.length - 2 ? '<span class="standing-tag standing-tag--eliminated">Éliminé</span>' : '<span class="standing-tag standing-tag--middle">À suivre</span>';
+                const cards = getTeamDisciplinaryStats(tournament, row.team);
+                return `<tr class="${badge}"><td>${index + 1}</td><td>${renderTeamLabel(row.team, tournament)} ${tag}</td><td>${row.points}</td><td>${row.goalDiff}</td><td>${row.played}</td><td>${cards.yellow}</td><td>${cards.red}</td></tr>`;
+            }).join('')}</tbody>
             `;
             groupSection.appendChild(table);
             wrapper.appendChild(groupSection);
@@ -1573,9 +1625,9 @@ function renderDashboardStandings(tournament) {
             table.innerHTML = `
                 <thead><tr><th>#</th><th>Équipe</th><th>Pts</th><th>Diff</th><th>J</th><th>🟨</th><th>🟥</th></tr></thead>
                 <tbody>${tournament.table.map((row, index) => {
-                    const cards = getTeamDisciplinaryStats(tournament, row.team);
-                    return `<tr class="${row.badge || ''}"><td>${index + 1}</td><td>${renderTeamLabel(row.team, tournament)}</td><td>${row.points}</td><td>${row.goalDiff}</td><td>${row.played}</td><td>${cards.yellow}</td><td>${cards.red}</td></tr>`;
-                }).join('')}</tbody>
+                const cards = getTeamDisciplinaryStats(tournament, row.team);
+                return `<tr class="${row.badge || ''}"><td>${index + 1}</td><td>${renderTeamLabel(row.team, tournament)}</td><td>${row.points}</td><td>${row.goalDiff}</td><td>${row.played}</td><td>${cards.yellow}</td><td>${cards.red}</td></tr>`;
+            }).join('')}</tbody>
             `;
             overallSection.appendChild(table);
             wrapper.appendChild(overallSection);
