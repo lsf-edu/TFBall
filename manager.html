@@ -6,21 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manager TFBall</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
     <header class="topbar">
         <div class="brand">TFBall Pro Manager</div>
         <div class="tab-nav public-tabs" role="tablist" aria-label="Navigation du tournoi">
-            <button class="tab-button active" data-tab="overview" role="tab" aria-selected="true">Vue
-                d’ensemble</button>
-            <button class="tab-button" data-tab="standings" role="tab" aria-selected="false">Classement</button>
-            <button class="tab-button" data-tab="calendar" role="tab" aria-selected="false">Calendrier</button>
-            <button class="tab-button" data-tab="results" role="tab" aria-selected="false">Résultats</button>
-            <button class="tab-button" data-tab="news" role="tab" aria-selected="false">Actualités</button>
-        </div>
-        <div class="actions">
-            <a class="secondary" href="index.html"><i class="fas fa-home"></i>×</a>
+            <button class="tab-button active" data-tab="overview" role="tab" aria-selected="true"
+                aria-label="Vue d’ensemble" title="Vue d’ensemble">
+                <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+            </button>
+            <button class="tab-button" data-tab="standings" role="tab" aria-selected="false" aria-label="Classement"
+                title="Classement">
+                <i class="fa-solid fa-ranking-star" aria-hidden="true"></i>
+            </button>
+            <button class="tab-button" data-tab="calendar" role="tab" aria-selected="false" aria-label="Calendrier"
+                title="Calendrier">
+                <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+            </button>
+            <button class="tab-button" data-tab="results" role="tab" aria-selected="false" aria-label="Résultats"
+                title="Résultats">
+                <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+            </button>
+            <button class="tab-button" data-tab="news" role="tab" aria-selected="false" aria-label="Actualités"
+                title="Actualités">
+                <i class="fa-regular fa-newspaper" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
     <main class="container">
@@ -124,6 +137,16 @@
                     <span class="team-badge__name">${escapeHtml(teamName)}</span>
                 </span>
             `;
+        }
+
+        function buildStandingTag(index, total) {
+            if (index < 2) {
+                return '<span class="standing-tag standing-tag--qualified">Qualifié</span>';
+            }
+            if (index >= total - 2) {
+                return '<span class="standing-tag standing-tag--eliminated">Éliminé</span>';
+            }
+            return '<span class="standing-tag standing-tag--middle">À suivre</span>';
         }
 
         function decodeTournamentPayload(value) {
