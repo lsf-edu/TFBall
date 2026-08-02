@@ -862,48 +862,25 @@ function buildCompactSharePayload(tournament) {
     if (!tournament) return null;
 
     return {
-        id: tournament.id,
-        name: tournament.name,
-        type: tournament.type,
-        status: tournament.status,
-        season: tournament.season,
-        champion: tournament.champion,
-        teams: (tournament.teams || []).map(team => (typeof team === 'string' ? team : team?.name || team)),
-        table: (tournament.table || []).map(row => ({
-            team: row.team,
-            points: row.points,
-            goalDiff: row.goalDiff,
-            played: row.played,
-            badge: row.badge
-        })),
-        groups: (tournament.groups || []).map(group => ({
-            name: group.name,
-            standings: (group.standings || []).map(row => ({
-                team: row.team,
-                points: row.points,
-                goalDiff: row.goalDiff,
-                played: row.played,
-                badge: row.badge
-            })),
-            rounds: (group.rounds || []).map(round => ({
-                name: round.name,
-                matches: (round.matches || []).map(match => ({
-                    home: match.home,
-                    away: match.away,
-                    scoreHome: match.scoreHome,
-                    scoreAway: match.scoreAway,
-                    groupName: group.name
-                }))
+        i: tournament.id,
+        n: tournament.name,
+        t: tournament.type,
+        s: tournament.status,
+        se: tournament.season,
+        c: tournament.champion,
+        te: (tournament.teams || []).map(team => (typeof team === 'string' ? team : team?.name || team)),
+        ta: (tournament.table || []).map(row => [row.team, row.points, row.goalDiff, row.played, row.badge]),
+        g: (tournament.groups || []).map(group => ({
+            n: group.name,
+            st: (group.standings || []).map(row => [row.team, row.points, row.goalDiff, row.played, row.badge]),
+            r: (group.rounds || []).map(round => ({
+                n: round.name,
+                m: (round.matches || []).map(match => [match.home, match.away, match.scoreHome, match.scoreAway])
             }))
         })),
-        bracket: (tournament.bracket || []).map(round => ({
-            name: round.name,
-            matches: (round.matches || []).map(match => ({
-                home: match.home,
-                away: match.away,
-                scoreHome: match.scoreHome,
-                scoreAway: match.scoreAway
-            }))
+        br: (tournament.bracket || []).map(round => ({
+            n: round.name,
+            m: (round.matches || []).map(match => [match.home, match.away, match.scoreHome, match.scoreAway])
         }))
     };
 }
@@ -916,7 +893,11 @@ function encodeTournamentPayload(tournament) {
     bytes.forEach(byte => {
         binary += String.fromCharCode(byte);
     });
-    return btoa(binary);
+
+    return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
 }
 
 function createExportLink(id, tournament = null) {
