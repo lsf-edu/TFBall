@@ -1307,15 +1307,43 @@ tr:hover {
 }
 
 @media (max-width: 640px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .container {
+        padding: 0 0.4rem;
+    }
+
+    .panel {
+        padding: 0.75rem;
+    }
+
     .topbar {
         flex-wrap: wrap;
         justify-content: center;
-        padding: 0.9rem 1rem;
+        padding: 0.75rem 0.6rem;
     }
 
     .brand {
         width: 100%;
         text-align: center;
+        font-size: 0.98rem;
+    }
+
+    .actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .actions button,
+    .actions a,
+    .tab-button,
+    .match-action-button {
+        padding: 0.4rem 0.62rem;
+        font-size: 0.74rem;
     }
 
     .public-tabs {
@@ -1324,15 +1352,33 @@ tr:hover {
     }
 
     .tab-button {
-        padding: 0.55rem 0.75rem;
-        font-size: 0.86rem;
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .form-grid,
+    .team-inputs .team-row,
+    .manual-players-panel,
+    .manual-score-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-row {
+        flex-direction: column;
+    }
+
+    .actions-row button {
+        width: 100%;
     }
 
     .match-row {
-        gap: 0.35rem;
+        gap: 0.25rem;
+        flex-wrap: nowrap;
     }
 
-    .round-section__header {
+    .round-section__header,
+    .group-summary-card__header,
+    .stage-item {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -1345,13 +1391,93 @@ tr:hover {
     }
 
     .team {
-        flex: 1 1 30%;
+        flex: 1 1 28%;
     }
 
-    .match-action-button {
+    .team-name {
+        font-size: 0.78rem;
+    }
+
+    .score-pill {
+        min-width: 20px;
+        padding: 0.18rem 0.34rem;
+        font-size: 0.74rem;
+    }
+
+    .modal {
+        padding: 0.2rem;
+    }
+
+    .modal__dialog,
+    #followModal .modal__dialog,
+    #manualScoreModal .modal__dialog {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 100vh;
+        border-radius: 0.7rem;
+        margin: 0;
+    }
+
+    #followModal .modal__dialog {
+        height: 100vh;
+    }
+
+    .modal__body,
+    #manualScoreModal .modal__body {
+        padding: 0.7rem;
+        overflow-x: hidden;
+    }
+
+    .modal__footer {
+        padding: 0.55rem 0.7rem;
+    }
+
+    .manual-final-score,
+    .team-player-panel,
+    .group-section,
+    .dashboard-card,
+    .round-section,
+    .dashboard-body {
+        padding: 0.7rem;
+    }
+
+    .table-responsive,
+    .player-table-container,
+    .dashboard-body,
+    .modal__body {
+        overflow-x: auto;
+    }
+
+    table,
+    .manager-table,
+    .dashboard-table {
+        font-size: 0.72rem;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th,
+    td,
+    .manager-table th,
+    .manager-table td,
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 0.38rem 0.32rem;
+    }
+
+    .manual-score-form,
+    .public-view {
+        gap: 0.55rem;
+    }
+
+    .score-label {
         min-width: 60px;
-        padding: 0.28rem 0.5rem;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
+    }
+
+    .penalty-label {
+        font-size: 0.78rem;
     }
 }
 
@@ -1593,6 +1719,7 @@ tr:hover {
 }
 
 @keyframes confettiDrop {
+
     0%,
     100% {
         transform: translateY(-4px) rotate(0deg);
