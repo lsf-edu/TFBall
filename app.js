@@ -885,10 +885,7 @@ function buildCompactSharePayload(tournament) {
     };
 }
 
-function encodeTournamentPayload(tournament) {
-    const payload = buildCompactSharePayload(tournament);
-    const json = JSON.stringify(payload);
-    const bytes = new TextEncoder().encode(json);
+function encodeBase64Url(bytes) {
     let binary = '';
     bytes.forEach(byte => {
         binary += String.fromCharCode(byte);
@@ -900,18 +897,46 @@ function encodeTournamentPayload(tournament) {
         .replace(/=+$/g, '');
 }
 
-function createExportLink(id, tournament = null) {
+function decodeBase64Url(value) {
+    const normalizedValue = String(value || '')
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+    const paddingNeeded = (4 - (normalizedValue.length % 4)) % 4;
+    const paddedValue = `${normalizedValue}${'='.repeat(paddingNeeded)}`;
+    const binary = atob(paddedValue);
+    return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+
+async function encodeTournamentPayload(tournament) {
+    const payload = buildCompactSharePayload(tournament);
+    const json = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(json);
+
+    if (typeof CompressionStream === 'function') {
+        try {
+            const compressedStream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+            const compressedBytes = new Uint8Array(await new Response(compressedStream).arrayBuffer());
+            return encodeBase64Url(compressedBytes);
+        } catch (error) {
+            console.warn('Compression du lien de partage indisponible, fallback sur l’encodage simple.', error);
+        }
+    }
+
+    return encodeBase64Url(bytes);
+}
+
+async function createExportLink(id, tournament = null) {
     const baseUrl = new URL('manager.html', window.location.href);
     baseUrl.searchParams.set('id', id);
     if (tournament) {
-        const compactPayload = encodeTournamentPayload(tournament);
-        baseUrl.searchParams.set('data', compactPayload);
+        const compactPayload = await encodeTournamentPayload(tournament);
+        baseUrl.hash = `d=${compactPayload}`;
     }
     return baseUrl.toString();
 }
 
 async function copyTournamentLink(tournament) {
-    const link = createExportLink(tournament.id, tournament);
+    const link = await createExportLink(tournament.id, tournament);
     tournament.exportLink = link;
     await saveTournament(tournament);
 
@@ -1948,7 +1973,7 @@ function renderTournamentRows(tournaments) {
         exportButton.className = 'secondary';
         exportButton.textContent = 'Exporter';
         exportButton.addEventListener('click', async () => {
-            tournament.exportLink = createExportLink(tournament.id, tournament);
+            tournament.exportLink = await createExportLink(tournament.id, tournament);
             await saveTournament(tournament);
             const json = JSON.stringify(tournament, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
