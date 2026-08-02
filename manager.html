@@ -46,6 +46,11 @@
             return new URLSearchParams(window.location.search).get(name);
         }
 
+        function getHashParam(name) {
+            const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+            return hash.get(name);
+        }
+
         function escapeHtml(value) {
             return String(value ?? '')
                 .replace(/&/g, '&amp;')
@@ -149,16 +154,27 @@
             return '<span class="standing-tag standing-tag--middle">À suivre</span>';
         }
 
-        function decodeTournamentPayload(value) {
+        async function decodeTournamentPayload(value) {
             try {
-                const normalizedValue = String(value || '')
-                    .replace(/-/g, '+')
-                    .replace(/_/g, '/');
-                const paddingNeeded = (4 - (normalizedValue.length % 4)) % 4;
-                const paddedValue = `${normalizedValue}${'='.repeat(paddingNeeded)}`;
-                const binary = atob(paddedValue);
-                const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-                const payload = JSON.parse(new TextDecoder().decode(bytes));
+                const bytes = Uint8Array.from(atob(String(value || '').replace(/-/g, '+').replace(/_/g, '/')), char => char.charCodeAt(0));
+                let payloadText = null;
+
+                if (typeof DecompressionStream === 'function') {
+                    try {
+                        const decompressedBytes = await new Response(
+                            new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+                        ).arrayBuffer();
+                        payloadText = new TextDecoder().decode(new Uint8Array(decompressedBytes));
+                    } catch (error) {
+                        payloadText = null;
+                    }
+                }
+
+                if (!payloadText) {
+                    payloadText = new TextDecoder().decode(bytes);
+                }
+
+                const payload = JSON.parse(payloadText);
 
                 return {
                     id: payload.i,
@@ -484,12 +500,12 @@
 
         async function initialize() {
             const content = document.getElementById('managerContent');
-            const payload = getQueryParam('data');
+            const payload = getQueryParam('data') || getHashParam('d');
             const id = getQueryParam('id');
             let tournament = null;
 
             if (payload) {
-                tournament = decodeTournamentPayload(payload);
+                tournament = await decodeTournamentPayload(payload);
             }
 
             if (!tournament && id) {
