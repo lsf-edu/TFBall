@@ -127,6 +127,15 @@ a.danger:hover {
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 18px 60px rgba(15, 23, 42, 0.25);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.panel--compact {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .panel--accent {
@@ -271,6 +280,7 @@ tr:hover {
     align-items: center;
     gap: 0.55rem;
     min-width: 0;
+    max-width: 100%;
 }
 
 .team-badge__logo {
@@ -284,8 +294,13 @@ tr:hover {
 }
 
 .team-badge__name {
+    display: block;
     font-weight: 700;
     color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .tournament-badge {
@@ -622,6 +637,11 @@ tr:hover {
     overflow: hidden;
 }
 
+.modal__header,
+.modal__footer {
+    flex: 0 0 auto;
+}
+
 #manualScoreModal {
     padding: 0;
 }
@@ -635,9 +655,10 @@ tr:hover {
 }
 
 #manualScoreModal .modal__body {
-    flex: 1;
+    flex: 0 1 auto;
     padding: 2rem;
     overflow: auto;
+    max-height: min(78vh, 720px);
 }
 
 #manualScoreModal .modal__footer {
@@ -841,8 +862,9 @@ tr:hover {
 
 .modal__body {
     padding: 1.25rem;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     overflow: auto;
+    max-height: min(70vh, 640px);
 }
 
 .modal__footer {
@@ -1004,16 +1026,17 @@ tr:hover {
 
 .tab-nav {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: 0.55rem;
     flex: 1;
+    min-width: 0;
 }
 
 .tab-button {
-    padding: 0.65rem 0.95rem;
-    min-width: 44px;
-    min-height: 44px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.04);
@@ -1023,6 +1046,12 @@ tr:hover {
     letter-spacing: 0.01em;
     transition: all 0.2s ease;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    flex: 0 0 auto;
+}
+
+.tab-button i {
+    font-size: 0.9rem;
+    line-height: 1;
 }
 
 .tab-button:hover {
@@ -1040,6 +1069,8 @@ tr:hover {
 
 .public-tabs {
     margin: 0 auto;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .dashboard-body {
@@ -1192,21 +1223,32 @@ tr:hover {
     color: #fdba74;
 }
 
+.round-match-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+}
+
 .round-match-list li {
-    padding: 0.45rem 0.6rem;
+    padding: 0;
 }
 
 .match-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.4rem;
-    flex-wrap: wrap;
+    gap: 0.45rem 0.6rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.95rem;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(255, 255, 255, 0.04));
+    border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .team {
     min-width: 0;
-    flex: 1 1 28%;
+    max-width: 100%;
 }
 
 .team-home {
@@ -1232,6 +1274,7 @@ tr:hover {
     justify-content: center;
     width: auto;
     min-width: 72px;
+    justify-self: center;
 }
 
 .score-pill {
@@ -1256,11 +1299,12 @@ tr:hover {
     border-radius: 999px;
     background: rgba(56, 189, 248, 0.12);
     color: var(--text);
-    padding: 0.3rem 0.55rem;
-    font-size: 0.85rem;
+    padding: 0.28rem 0.62rem;
+    font-size: 0.82rem;
     min-width: 64px;
     white-space: nowrap;
     flex-shrink: 0;
+    justify-self: end;
 }
 
 .match-input-row {
@@ -1306,36 +1350,82 @@ tr:hover {
     padding: 0.35rem 0.65rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     body {
         overflow-x: hidden;
     }
 
     .container {
-        padding: 0 0.4rem;
+        padding: 0 0.75rem;
+        max-width: 100%;
     }
 
     .panel {
-        padding: 0.75rem;
+        padding: 0.9rem;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
 
     .topbar {
         flex-wrap: wrap;
         justify-content: center;
-        padding: 0.75rem 0.6rem;
+        padding: 0.85rem 0.75rem;
     }
 
     .brand {
         width: 100%;
         text-align: center;
-        font-size: 0.98rem;
+        font-size: 1rem;
     }
 
     .actions {
         width: 100%;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 0.35rem;
+        gap: 0.4rem;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbar>* {
+        width: 100%;
+    }
+
+    .table-responsive,
+    .player-table-container,
+    .dashboard-body,
+    .modal__body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #tournamentsTable,
+    .manager-table,
+    .dashboard-table {
+        min-width: 560px;
+        font-size: 0.78rem;
+    }
+
+    .actions-row {
+        flex-direction: column;
+    }
+
+    .actions-row button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 0 0.4rem;
+    }
+
+    .panel {
+        padding: 0.75rem;
     }
 
     .actions button,
@@ -1348,12 +1438,22 @@ tr:hover {
 
     .public-tabs {
         width: 100%;
-        justify-content: center;
+        justify-content: flex-start;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 0.12rem;
+    }
+
+    .public-tabs::-webkit-scrollbar {
+        display: none;
     }
 
     .tab-button {
-        min-width: 36px;
-        min-height: 36px;
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
+        flex: 0 0 38px;
     }
 
     .form-grid,
@@ -1363,17 +1463,10 @@ tr:hover {
         grid-template-columns: 1fr;
     }
 
-    .actions-row {
-        flex-direction: column;
-    }
-
-    .actions-row button {
-        width: 100%;
-    }
-
     .match-row {
-        gap: 0.25rem;
-        flex-wrap: nowrap;
+        gap: 0.35rem;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        padding: 0.65rem 0.7rem;
     }
 
     .round-section__header,
@@ -1394,14 +1487,102 @@ tr:hover {
         flex: 1 1 28%;
     }
 
+    .group-section,
+    .round-section,
+    .calendar-round,
+    .group-summary-card,
+    .calendar-match,
+    .manager-result {
+        padding: 0.7rem;
+    }
+
+    .match-row {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        justify-items: center;
+        text-align: center;
+        padding: 0.6rem 0.7rem;
+    }
+
+    .team-home,
+    .team-away {
+        text-align: center;
+        width: 100%;
+    }
+
+    .score {
+        width: auto;
+        margin: 0;
+        grid-column: 2;
+    }
+
+    .match-action-button {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: 100%;
+        max-width: 160px;
+        margin-top: 0.15rem;
+    }
+
     .team-name {
-        font-size: 0.78rem;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .group-summary-card__teams {
+        width: 100%;
+        gap: 0.35rem;
+    }
+
+    .qualifier-team,
+    .group-pill,
+    .standing-tag {
+        white-space: normal;
+        font-size: 10px;
+    }
+
+    .calendar-match-list,
+    .group-summary-list,
+    .event-list,
+    .calendar-feed,
+    .press-feed,
+    .results-feed {
+        gap: 0.5rem;
+    }
+
+    .result-card {
+        padding: 0.75rem;
+    }
+
+    .result-card__teams {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+        gap: 0.45rem;
+    }
+
+    .result-card__score {
+        min-width: 68px;
+    }
+
+    .team-name,
+    .team-badge__name {
+        font-size: 9px;
+        max-width: 48px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
+
+    .team-badge__logo {
+        width: 20px;
+        height: 20px;
     }
 
     .score-pill {
         min-width: 20px;
         padding: 0.18rem 0.34rem;
-        font-size: 0.74rem;
+        font-size: 12px;
     }
 
     .modal {
@@ -1441,20 +1622,20 @@ tr:hover {
         padding: 0.7rem;
     }
 
-    .table-responsive,
-    .player-table-container,
-    .dashboard-body,
-    .modal__body {
-        overflow-x: auto;
-    }
-
     table,
     .manager-table,
     .dashboard-table {
-        font-size: 0.72rem;
+        font-size: 11px;
+        width: 100%;
+        max-width: 100%;
+        table-layout: fixed;
+    }
+
+    .manager-table,
+    .dashboard-table {
         display: block;
         overflow-x: auto;
-        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
     }
 
     th,
@@ -1463,7 +1644,10 @@ tr:hover {
     .manager-table td,
     .dashboard-table th,
     .dashboard-table td {
-        padding: 0.38rem 0.32rem;
+        padding: 0.24rem 0.22rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .manual-score-form,
@@ -1473,11 +1657,11 @@ tr:hover {
 
     .score-label {
         min-width: 60px;
-        font-size: 0.8rem;
+        font-size: 12px;
     }
 
     .penalty-label {
-        font-size: 0.78rem;
+        font-size: 12px;
     }
 }
 
@@ -1619,6 +1803,9 @@ tr:hover {
 .calendar-match-list {
     display: grid;
     gap: 0.65rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .calendar-match {
@@ -1657,6 +1844,51 @@ tr:hover {
     background: rgba(255, 255, 255, 0.08);
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
+}
+
+.results-feed {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.result-card {
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.09), rgba(255, 255, 255, 0.04));
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.14);
+}
+
+.result-card__header {
+    margin-bottom: 0.55rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.result-card__teams {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.result-card__team {
+    min-width: 0;
+}
+
+.result-card__score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    padding: 0.38rem 0.72rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    color: #f8fafc;
+    font-weight: 800;
 }
 
 .progress-bar {
