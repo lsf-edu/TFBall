@@ -39,11 +39,50 @@ body {
     z-index: 20;
     backdrop-filter: blur(12px);
     background: rgba(15, 23, 42, 0.8);
+    /* use percentage for responsive horizontal offset */
+    margin-left: 5%;
+}
+
+/* responsive adjustments */
+@media (max-width: 900px) {
+    .topbar {
+        margin-left: 3%;
+    }
+}
+
+@media (max-width: 640px) {
+    .topbar {
+        margin-left: 0;
+    }
+}
+
+.manager-page .topbar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 92px;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem 0.75rem;
+    border-right: 1px solid rgba(148, 163, 184, 0.18);
+    border-bottom: none;
+    backdrop-filter: blur(18px);
 }
 
 .brand {
     font-size: 1.2rem;
     font-weight: 700;
+}
+
+.manager-page .brand {
+    width: 100%;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
 }
 
 .actions {
@@ -94,6 +133,43 @@ a.danger:hover {
     position: relative;
 }
 
+/* Icon + label support */
+.btn-label {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+/* Compact mode: only show icons, reduce padding */
+body.compact-buttons button,
+body.compact-buttons .tab-button {
+    padding: 0.35rem 0.45rem;
+}
+
+body.compact-buttons .btn-label {
+    display: none !important;
+}
+
+/* Labels visible mode: show labels under icons for narrow buttons */
+body.labels-visible .icon-button .btn-label,
+body.labels-visible .secondary .btn-label,
+body.labels-visible .primary .btn-label {
+    display: inline-block;
+}
+
+/* Vertical layout for manager-page buttons: show label under icon when labels-visible */
+.manager-page .tab-button .btn-label {
+    display: none;
+}
+
+.manager-page.labels-visible .tab-button .btn-label {
+    display: block;
+    font-size: 0.75rem;
+    margin-left: 0;
+    margin-top: 6px;
+}
+
 .badge {
     position: absolute;
     top: 6px;
@@ -119,6 +195,25 @@ a.danger:hover {
 
     display: grid;
     gap: 1.5rem;
+}
+
+.manager-page .container {
+    margin: 1.5rem 1.5rem 1.5rem 6%;
+    max-width: calc(100% - 6%);
+}
+
+@media (max-width: 900px) {
+    .manager-page .container {
+        margin-left: 4%;
+        max-width: calc(100% - 4%);
+    }
+}
+
+@media (max-width: 640px) {
+    .manager-page .container {
+        margin-left: 2%;
+        max-width: calc(100% - 2%);
+    }
 }
 
 .panel {
@@ -1049,6 +1144,12 @@ tr:hover {
     flex: 0 0 auto;
 }
 
+.manager-page .tab-button {
+    width: 100%;
+    min-width: 0;
+    border-radius: 0.85rem;
+}
+
 .tab-button i {
     font-size: 0.9rem;
     line-height: 1;
@@ -1073,12 +1174,22 @@ tr:hover {
     max-width: 100%;
 }
 
+.manager-page .public-tabs {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0;
+}
+
 .dashboard-body {
     background: var(--surface);
     border: 1px solid rgba(148, 163, 184, 0.12);
     border-radius: 1rem;
     padding: 1.25rem;
     min-height: 280px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .dashboard-card,
@@ -1089,6 +1200,8 @@ tr:hover {
     padding: 1.1rem 1.2rem;
     margin-bottom: 1rem;
     box-shadow: 0 10px 30px rgba(2, 6, 23, 0.16);
+    width: 100%;
+    max-width: 100%;
 }
 
 .round-section__header {
@@ -1176,6 +1289,7 @@ tr:hover {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    min-width: 0;
 }
 
 .dashboard-card h3,
@@ -1305,6 +1419,12 @@ tr:hover {
     white-space: nowrap;
     flex-shrink: 0;
     justify-self: end;
+}
+
+.match-action-button.forfeited {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #b91c1c;
 }
 
 .match-input-row {
