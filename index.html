@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TFBall - Gestion de Tournois</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
@@ -13,11 +15,22 @@
         <div class="brand">TFBall Manager</div>
         <div class="actions">
             <button id="notificationButton" class="icon-button" title="Notifications">
-                🔔
+                <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                <span class="btn-label">Notif</span>
                 <span id="notificationBadge" class="badge hidden">0</span>
             </button>
-            <button id="resetDbButton" class="secondary danger" title="Vider la base de données">Réinitialiser</button>
-            <button id="openCreateButton" class="primary">Créer un tournoi</button>
+            <button id="resetDbButton" class="secondary danger" title="Vider la base de données">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                <span class="btn-label">Vider</span>
+            </button>
+            <button id="openCreateButton" class="primary" title="Créer un tournoi">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                <span class="btn-label">Créer</span>
+            </button>
+            <button id="toggleButton" class="secondary" title="Affichage boutons">
+                <i class="fa-solid fa-toggle-off" aria-hidden="true"></i>
+                <span class="btn-label">Mode</span>
+            </button>
         </div>
     </header>
 
@@ -35,7 +48,24 @@
                     <option value="Knockout">Élimination directe</option>
                     <option value="GroupKnockout">Phase de groupe + élimination</option>
                 </select>
-                <button id="refreshButton" class="secondary">Actualiser</button>
+                <input id="globalSearch" type="search" placeholder="Rechercher équipes, tournois..."
+                    aria-label="Recherche" />
+                <button id="refreshButton" class="secondary" title="Actualiser">
+                    <i class="fa-solid fa-sync" aria-hidden="true"></i>
+                    <span class="btn-label">Actualiser</span>
+                </button>
+                <button id="statsButton" class="secondary" title="Statistiques">
+                    <i class="fa-solid fa-chart-simple" aria-hidden="true"></i>
+                    <span class="btn-label">Stats</span>
+                </button>
+                <button id="exportImgButton" class="secondary" title="Exporter image">
+                    <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                    <span class="btn-label">Image</span>
+                </button>
+                <button id="helpButton" class="secondary" title="Aide">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    <span class="btn-label">Aide</span>
+                </button>
             </div>
             <div class="table-responsive">
                 <table id="tournamentsTable">
@@ -73,7 +103,9 @@
                 <p>Aucune notification pour le moment.</p>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="notificationModal">×</button>
+                <button class="secondary" data-close="notificationModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -128,13 +160,19 @@
                     <div id="teamInputs" class="team-inputs"></div>
 
                     <div class="actions-row">
-                        <button type="button" id="resetButton" class="secondary">Réinitialiser</button>
-                        <button type="submit" class="primary">Créer le tournoi</button>
+                        <button type="button" id="resetButton" class="secondary" title="Réinitialiser">
+                            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                        </button>
+                        <button type="submit" class="primary" title="Créer le tournoi">
+                            <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </form>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="tournamentModal">×</button>
+                <button class="secondary" data-close="tournamentModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -148,7 +186,9 @@
                 <p>Chargement...</p>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="summaryModal">×</button>
+                <button class="secondary" data-close="summaryModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -160,13 +200,20 @@
                     <h3>Suivi du tournoi</h3>
                 </div>
                 <div class="tab-nav">
-                    <button class="tab-button active" data-tab="overview" title="Tableau de bord">🏠</button>
-                    <button class="tab-button" data-tab="matchs" title="Matchs">⚽</button>
-                    <button class="tab-button" data-tab="classement" title="Classement">🏆</button>
-                    <button class="tab-button" data-tab="buteur" title="Meilleur buteur">🥇</button>
-                    <button class="tab-button" data-tab="passeur" title="Meilleur passeur">🎯</button>
-                    <button class="tab-button" data-tab="summary" title="Résumé du tournoi">📄</button>
-                    <button class="tab-button" data-tab="press" title="Press et actu">📰</button>
+                    <button class="tab-button active" data-tab="overview" title="Tableau de bord"><i
+                            class="fa-solid fa-house" aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="matchs" title="Matchs"><i class="fa-solid fa-futbol"
+                            aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="classement" title="Classement"><i class="fa-solid fa-trophy"
+                            aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="buteur" title="Meilleur buteur"><i class="fa-solid fa-medal"
+                            aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="passeur" title="Meilleur passeur"><i
+                            class="fa-solid fa-bullseye" aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="summary" title="Résumé du tournoi"><i
+                            class="fa-regular fa-file" aria-hidden="true"></i></button>
+                    <button class="tab-button" data-tab="press" title="Press et actu"><i class="fa-regular fa-newspaper"
+                            aria-hidden="true"></i></button>
                 </div>
             </div>
             <div class="modal__body">
@@ -175,7 +222,9 @@
                 </div>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="followModal">×</button>
+                <button class="secondary" data-close="followModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -215,12 +264,22 @@
                             <span class="score-sep">-</span>
                             <input type="number" id="manualPenaltyAway" min="0" placeholder="0" />
                         </div>
+                        <div class="forfeit-row">
+                            <label class="forfeit-label" for="manualBothForfeit">
+                                <input type="checkbox" id="manualBothForfeit" />
+                                Les deux équipes déclarent forfait
+                            </label>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="manualScoreModal">Annuler</button>
-                <button type="submit" class="primary" form="manualScoreForm">Enregistrer</button>
+                <button class="secondary" data-close="manualScoreModal" title="Annuler">
+                    <i class="fa-solid fa-ban" aria-hidden="true"></i>
+                </button>
+                <button type="submit" class="primary" form="manualScoreForm" title="Enregistrer">
+                    <i class="fa-solid fa-save" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -231,7 +290,7 @@
                 <h3>Félicitations !</h3>
             </div>
             <div class="modal__body modal__body--celebration" id="finalMessage">
-                <div class="celebration-icon" aria-hidden="true">🏆</div>
+                <div class="celebration-icon" aria-hidden="true"><i class="fa-solid fa-trophy"></i></div>
                 <p class="celebration-subtitle">Tournoi terminé</p>
                 <p id="championText" class="celebration-champion"></p>
                 <div class="celebration-confetti" aria-hidden="true">
@@ -240,7 +299,43 @@
                 <div class="animation-stars"></div>
             </div>
             <div class="modal__footer">
-                <button class="secondary" data-close="finalModal">×</button>
+                <button class="secondary" data-close="finalModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats modal -->
+    <div class="modal hidden" id="statsModal" aria-hidden="true">
+        <div class="modal__dialog modal__dialog--wide">
+            <div class="modal__header">
+                <h3>Statistiques</h3>
+            </div>
+            <div class="modal__body">
+                <canvas id="statsChartCanvas" width="800" height="400"></canvas>
+            </div>
+            <div class="modal__footer">
+                <button class="secondary" data-close="statsModal" title="Fermer">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help modal / tour -->
+    <div class="modal hidden" id="helpModal" aria-hidden="true">
+        <div class="modal__dialog">
+            <div class="modal__header">
+                <h3>Aide rapide</h3>
+            </div>
+            <div class="modal__body" id="helpContent">
+                <div id="helpStep">Chargement...</div>
+            </div>
+            <div class="modal__footer">
+                <button id="helpPrev" class="secondary">Précédent</button>
+                <button id="helpNext" class="primary">Suivant</button>
+                <button class="secondary" data-close="helpModal">Fermer</button>
             </div>
         </div>
     </div>
@@ -256,6 +351,8 @@
     </template>
 
     <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </body>
 
 </html>
