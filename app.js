@@ -8,7 +8,7 @@ let modalState, notificationButton, notificationBadge, notificationList, openCre
 let closeButtons, teamInputs, teamCount, tournamentForm, resetButton, tournamentsTable;
 let notificationEntries = [];
 let tournamentType, statusFilter, refreshButton, summaryContent, summaryModalContent, championText, drawMethod, dashboardShell, dashboardBody, tabButtons, selectedTournament;
-let manualScoreModal, manualScoreForm, manualScoreHome, manualScoreAway, manualPenaltyHome, manualPenaltyAway, manualScoreInfo, manualPlayersHomeContainer, manualPlayersAwayContainer, currentManualMatch, currentManualTournament;
+let manualScoreModal, manualScoreForm, manualScoreHome, manualScoreAway, manualPenaltyHome, manualPenaltyAway, manualScoreInfo, manualPlayersHomeContainer, manualPlayersAwayContainer, currentManualMatch, currentManualTournament, manualBothForfeit, globalSearch, statsButton, exportImgButton, helpButton, statsChartInstance;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -275,9 +275,9 @@ function showNotification(message, type = 'info') {
     }
 
     const config = {
-        info: { title: 'Information', icon: '🔔', className: 'info' },
-        success: { title: 'Succès', icon: '✓', className: 'success' },
-        error: { title: 'Erreur', icon: '⚠', className: 'error' },
+        info: { title: 'Information', icon: '<i class="fa-solid fa-bell" aria-hidden="true"></i>', className: 'info' },
+        success: { title: 'Succès', icon: '<i class="fa-solid fa-check" aria-hidden="true"></i>', className: 'success' },
+        error: { title: 'Erreur', icon: '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>', className: 'error' },
     };
     const style = config[type] || config.info;
     notificationEntries.push({
@@ -411,7 +411,19 @@ async function simulateMatches(matches) {
 }
 
 function applyResultsToStandings(standings, match) {
-    if (match.scoreHome == null || match.scoreAway == null) return;
+    if (match.scoreHome == null || match.scoreAway == null) {
+        if (match.forfeitBoth) {
+            const homeRow = standings.find(row => row.team === match.home);
+            const awayRow = standings.find(row => row.team === match.away);
+            if (!homeRow || !awayRow) return;
+            homeRow.played += 1;
+            awayRow.played += 1;
+            homeRow.goalDiff -= 3;
+            awayRow.goalDiff -= 3;
+            return;
+        }
+        return;
+    }
     const homeRow = standings.find(row => row.team === match.home);
     const awayRow = standings.find(row => row.team === match.away);
     if (!homeRow || !awayRow) return;
@@ -1183,6 +1195,20 @@ function openManualScoreModal(match, tournament) {
     if (manualPenaltyHome) manualPenaltyHome.value = typeof match.penaltiesHome === 'number' ? match.penaltiesHome : '';
     if (manualPenaltyAway) manualPenaltyAway.value = typeof match.penaltiesAway === 'number' ? match.penaltiesAway : '';
 
+    // forfeit checkbox: reflect match state and toggle inputs
+    if (manualBothForfeit) {
+        manualBothForfeit.checked = !!(match.forfeitBoth || match.forfeit);
+        const toggleInputs = () => {
+            const checked = manualBothForfeit.checked;
+            if (manualScoreHome) manualScoreHome.disabled = checked;
+            if (manualScoreAway) manualScoreAway.disabled = checked;
+            if (manualPenaltyHome) manualPenaltyHome.disabled = checked;
+            if (manualPenaltyAway) manualPenaltyAway.disabled = checked;
+        };
+        manualBothForfeit.addEventListener('change', toggleInputs);
+        toggleInputs();
+    }
+
     populateManualPlayers(match, tournament);
     showModal('manualScoreModal');
 }
@@ -1193,17 +1219,27 @@ async function handleManualScoreFormSubmit(event) {
 
     try {
         currentManualTournament = normalizeTournamentGroupStructure(currentManualTournament);
-        const homeValue = Number(manualScoreHome?.value ?? 0);
-        const awayValue = Number(manualScoreAway?.value ?? 0);
-        const penaltyHomeValue = manualPenaltyHome?.value === '' ? null : Number(manualPenaltyHome?.value ?? 0);
-        const penaltyAwayValue = manualPenaltyAway?.value === '' ? null : Number(manualPenaltyAway?.value ?? 0);
-        if (Number.isNaN(homeValue) || Number.isNaN(awayValue) || homeValue < 0 || awayValue < 0) {
-            showNotification('Veuillez saisir des scores valides.', 'error');
-            return;
-        }
-        if ((penaltyHomeValue != null && Number.isNaN(penaltyHomeValue)) || (penaltyAwayValue != null && Number.isNaN(penaltyAwayValue))) {
-            showNotification('Veuillez saisir des tirs au but valides.', 'error');
-            return;
+        const targetMatch = currentManualMatch;
+        const isBothForfeit = !!(manualBothForfeit && manualBothForfeit.checked);
+
+        let homeValue = null;
+        let awayValue = null;
+        let penaltyHomeValue = null;
+        let penaltyAwayValue = null;
+
+        if (!isBothForfeit) {
+            homeValue = Number(manualScoreHome?.value ?? 0);
+            awayValue = Number(manualScoreAway?.value ?? 0);
+            penaltyHomeValue = manualPenaltyHome?.value === '' ? null : Number(manualPenaltyHome?.value ?? 0);
+            penaltyAwayValue = manualPenaltyAway?.value === '' ? null : Number(manualPenaltyAway?.value ?? 0);
+            if (Number.isNaN(homeValue) || Number.isNaN(awayValue) || homeValue < 0 || awayValue < 0) {
+                showNotification('Veuillez saisir des scores valides.', 'error');
+                return;
+            }
+            if ((penaltyHomeValue != null && Number.isNaN(penaltyHomeValue)) || (penaltyAwayValue != null && Number.isNaN(penaltyAwayValue))) {
+                showNotification('Veuillez saisir des tirs au but valides.', 'error');
+                return;
+            }
         }
 
         if (!Array.isArray(currentManualMatch.homePlayers)) {
@@ -1243,12 +1279,21 @@ async function handleManualScoreFormSubmit(event) {
             syncTournamentRosterStats(currentManualTournament, currentManualMatch.away, currentManualMatch.awayPlayers);
         }
 
-        const targetMatch = currentManualMatch;
-        targetMatch.scoreHome = homeValue;
-        targetMatch.scoreAway = awayValue;
-        targetMatch.penaltiesHome = penaltyHomeValue;
-        targetMatch.penaltiesAway = penaltyAwayValue;
-        targetMatch.events = createMatchEvents(targetMatch);
+        if (isBothForfeit) {
+            targetMatch.scoreHome = null;
+            targetMatch.scoreAway = null;
+            targetMatch.penaltiesHome = null;
+            targetMatch.penaltiesAway = null;
+            targetMatch.forfeit = true;
+            targetMatch.forfeitBoth = true;
+            targetMatch.events = [{ time: '-', description: 'Forfait, les deux équipes ont déclaré forfait' }];
+        } else {
+            targetMatch.scoreHome = homeValue;
+            targetMatch.scoreAway = awayValue;
+            targetMatch.penaltiesHome = penaltyHomeValue;
+            targetMatch.penaltiesAway = penaltyAwayValue;
+            targetMatch.events = createMatchEvents(targetMatch);
+        }
 
         if (currentManualTournament.type === 'Knockout') {
             advanceKnockoutBracket(currentManualTournament.bracket);
@@ -1294,7 +1339,11 @@ async function handleManualScoreFormSubmit(event) {
             setActiveTab('matchs');
         }
         hideModal('manualScoreModal');
-        showNotification(`Résultat enregistré : ${targetMatch.home} ${homeValue}-${awayValue} ${targetMatch.away}.`, 'success');
+        if (targetMatch.forfeitBoth) {
+            showNotification(`Forfait enregistré pour ${targetMatch.home} vs ${targetMatch.away}.`, 'success');
+        } else {
+            showNotification(`Résultat enregistré : ${targetMatch.home} ${targetMatch.scoreHome}-${targetMatch.scoreAway} ${targetMatch.away}.`, 'success');
+        }
     } catch (error) {
         console.error('Erreur lors de l’enregistrement du match.', error);
         showNotification('Une erreur est survenue pendant l’enregistrement. Le tournoi reste utilisable.', 'error');
@@ -1395,24 +1444,31 @@ function renderDashboardOverview(tournament) {
 
 function buildMatchActionButton(match, tournament) {
     const finished = typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number';
+    const isForfeit = !!match.forfeitBoth || !!match.forfeit;
     const homeName = String(match.home || '').trim();
     const awayName = String(match.away || '').trim();
     const hasPlayableTeams = Boolean(homeName && homeName !== 'TBD' && homeName !== 'BYE' && awayName && awayName !== 'TBD' && awayName !== 'BYE');
 
     const actionButton = document.createElement('button');
     actionButton.type = 'button';
-    actionButton.className = finished ? 'match-action-button finished' : 'match-action-button live';
-    actionButton.textContent = finished ? 'Terminé' : 'En direct';
-    actionButton.disabled = !hasPlayableTeams;
-    actionButton.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!hasPlayableTeams) {
-            showNotification('Ce match n’a pas encore d’équipes valides pour être suivi.', 'error');
-            return;
-        }
-        openManualScoreModal(match, tournament);
-    });
+    if (isForfeit) {
+        actionButton.className = 'match-action-button forfeited';
+        actionButton.textContent = 'Forfait';
+        actionButton.disabled = true;
+    } else {
+        actionButton.className = finished ? 'match-action-button finished' : 'match-action-button live';
+        actionButton.textContent = finished ? 'Terminé' : 'En direct';
+        actionButton.disabled = !hasPlayableTeams;
+        actionButton.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!hasPlayableTeams) {
+                showNotification('Ce match n’a pas encore d’équipes valides pour être suivi.', 'error');
+                return;
+            }
+            openManualScoreModal(match, tournament);
+        });
+    }
     return actionButton;
 }
 
@@ -1964,14 +2020,16 @@ function renderTournamentRows(tournaments) {
 
         const viewButton = document.createElement('button');
         viewButton.className = 'secondary';
-        viewButton.textContent = 'Détails';
+        viewButton.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
+        viewButton.title = 'Détails';
         viewButton.addEventListener('click', () => {
             showSummaryModal(tournament);
         });
 
         const exportButton = document.createElement('button');
         exportButton.className = 'secondary';
-        exportButton.textContent = 'Exporter';
+        exportButton.innerHTML = '<i class="fa-solid fa-file-export" aria-hidden="true"></i>';
+        exportButton.title = 'Exporter';
         exportButton.addEventListener('click', async () => {
             tournament.exportLink = await createExportLink(tournament.id, tournament);
             await saveTournament(tournament);
@@ -1990,7 +2048,8 @@ function renderTournamentRows(tournaments) {
 
         const copyButton = document.createElement('button');
         copyButton.className = 'secondary';
-        copyButton.textContent = 'Copier';
+        copyButton.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i>';
+        copyButton.title = 'Copier le lien';
         copyButton.addEventListener('click', async () => {
             try {
                 await copyTournamentLink(tournament);
@@ -2002,7 +2061,8 @@ function renderTournamentRows(tournaments) {
 
         const deleteButton = document.createElement('button');
         deleteButton.className = 'secondary danger';
-        deleteButton.textContent = 'Supprimer';
+        deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+        deleteButton.title = 'Supprimer';
         deleteButton.addEventListener('click', async () => {
             if (!confirm(`Supprimer le tournoi "${tournament.name}" ? Cette action est irréversible.`)) return;
             await deleteTournament(tournament.id);
@@ -2012,7 +2072,8 @@ function renderTournamentRows(tournaments) {
 
         const simulateButton = document.createElement('button');
         simulateButton.className = 'primary';
-        simulateButton.textContent = 'Suivre';
+        simulateButton.innerHTML = '<i class="fa-solid fa-play" aria-hidden="true"></i>';
+        simulateButton.title = 'Suivre';
         simulateButton.addEventListener('click', async () => {
             await followTournament(tournament);
         });
@@ -2090,6 +2151,19 @@ function attachEventListeners() {
     tournamentForm.addEventListener('submit', handleSubmit);
     manualScoreForm.addEventListener('submit', handleManualScoreFormSubmit);
     refreshButton.addEventListener('click', refreshList);
+    globalSearch?.addEventListener('input', () => applySearchFilter(globalSearch.value));
+    statsButton?.addEventListener('click', async () => {
+        if (!selectedTournament) {
+            showNotification('Sélectionnez un tournoi à gauche (Détails) puis réessayez.', 'info');
+            return;
+        }
+        await renderStatsForSelected();
+        showModal('statsModal');
+    });
+    exportImgButton?.addEventListener('click', async () => {
+        await exportDashboardImage();
+    });
+    helpButton?.addEventListener('click', () => showHelpTour());
     tabButtons.forEach(button => button.addEventListener('click', () => setActiveTab(button.dataset.tab)));
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
@@ -2106,18 +2180,48 @@ async function init() {
         followModal: document.getElementById('followModal'),
         manualScoreModal: document.getElementById('manualScoreModal'),
         finalModal: document.getElementById('finalModal'),
+        statsModal: document.getElementById('statsModal'),
+        helpModal: document.getElementById('helpModal'),
     };
     notificationButton = document.getElementById('notificationButton');
     notificationBadge = document.getElementById('notificationBadge');
     notificationList = document.getElementById('notificationList');
     openCreateButton = document.getElementById('openCreateButton');
     resetDbButton = document.getElementById('resetDbButton');
+    toggleButton = document.getElementById('toggleButton');
     closeButtons = document.querySelectorAll('[data-close]');
     teamInputs = document.getElementById('teamInputs');
     teamCount = document.getElementById('teamCount');
     tournamentForm = document.getElementById('tournamentForm');
     resetButton = document.getElementById('resetButton');
     tournamentsTable = document.querySelector('#tournamentsTable tbody');
+    globalSearch = document.getElementById('globalSearch');
+    statsButton = document.getElementById('statsButton');
+    exportImgButton = document.getElementById('exportImgButton');
+    helpButton = document.getElementById('helpButton');
+    toggleButton?.addEventListener('click', () => {
+        const body = document.body;
+        if (body.classList.contains('compact-buttons')) {
+            body.classList.remove('compact-buttons');
+            body.classList.add('labels-visible');
+            localStorage.setItem('btnStyle', 'labels');
+            toggleButton.innerHTML = '<i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span class="btn-label">Labels</span>';
+        } else {
+            body.classList.remove('labels-visible');
+            body.classList.add('compact-buttons');
+            localStorage.setItem('btnStyle', 'compact');
+            toggleButton.innerHTML = '<i class="fa-solid fa-toggle-off" aria-hidden="true"></i><span class="btn-label">Compact</span>';
+        }
+    });
+    // apply saved button style
+    const saved = localStorage.getItem('btnStyle') || 'labels';
+    if (saved === 'compact') document.body.classList.add('compact-buttons');
+    else document.body.classList.add('labels-visible');
+    // update toggle visual
+    if (toggleButton) {
+        if (document.body.classList.contains('compact-buttons')) toggleButton.innerHTML = '<i class="fa-solid fa-toggle-off" aria-hidden="true"></i><span class="btn-label">Compact</span>';
+        else toggleButton.innerHTML = '<i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span class="btn-label">Labels</span>';
+    }
     tournamentType = document.getElementById('tournamentType');
     statusFilter = document.getElementById('statusFilter');
     refreshButton = document.getElementById('refreshButton');
@@ -2137,10 +2241,74 @@ async function init() {
     manualScoreInfo = document.getElementById('manualScoreInfo');
     manualPlayersHomeContainer = document.getElementById('homePlayersContainer');
     manualPlayersAwayContainer = document.getElementById('awayPlayersContainer');
+    manualBothForfeit = document.getElementById('manualBothForfeit');
     attachEventListeners();
     updateTeamInputs();
     await refreshList();
     showNotification('Bienvenue dans TFBall Manager. Cliquez sur la cloche pour lire les notifications.');
+}
+
+function applySearchFilter(query) {
+    const q = String(query || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('#tournamentsTable tbody tr');
+    rows.forEach(row => {
+        if (!q) { row.style.display = ''; return; }
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+    });
+}
+
+async function renderStatsForSelected() {
+    const t = selectedTournament;
+    if (!t) return;
+    const labels = (t.table || []).map(r => r.team || (r.team && r.team.name) || r.name);
+    const data = (t.table || []).map(r => Number(r.points || 0));
+    const canvas = document.getElementById('statsChartCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (statsChartInstance) statsChartInstance.destroy();
+    statsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Points', data, backgroundColor: labels.map(() => 'rgba(56,189,248,0.75)') }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+}
+
+async function exportDashboardImage() {
+    const el = document.getElementById('dashboardShell') || document.getElementById('managerContent') || document.body;
+    if (!el) { showNotification('Aucun contenu à exporter.', 'error'); return; }
+    try {
+        const canvas = await html2canvas(el, { backgroundColor: null });
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${createSlug(selectedTournament?.name || 'dashboard')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showNotification('Image exportée.', 'success');
+    } catch (error) {
+        console.error(error);
+        showNotification('Erreur lors de l’export de l’image.', 'error');
+    }
+}
+
+function showHelpTour() {
+    const steps = [
+        'Barre de recherche : filtre les tournois et équipes en temps réel.',
+        'Bouton Stats : affiche un graphique des points par équipe pour le tournoi sélectionné.',
+        'Exporter image : capture la vue du tableau de bord en PNG.',
+        'Mode boutons : bascule entre affichage compact et labels.',
+        'Édition : utilisez Détails pour modifier un tournoi et ses matchs.'
+    ];
+    let step = 0;
+    const helpStep = document.getElementById('helpStep');
+    const prev = document.getElementById('helpPrev');
+    const next = document.getElementById('helpNext');
+    function update() { if (helpStep) helpStep.textContent = steps[step] || ''; if (prev) prev.disabled = step === 0; if (next) next.textContent = step === steps.length - 1 ? 'Terminer' : 'Suivant'; }
+    if (prev) prev.onclick = () => { if (step > 0) { step -= 1; update(); } };
+    if (next) next.onclick = () => { if (step < steps.length - 1) { step += 1; update(); } else { hideModal('helpModal'); } };
+    showModal('helpModal'); update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
