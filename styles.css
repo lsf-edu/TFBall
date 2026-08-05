@@ -73,8 +73,18 @@ body {
 }
 
 .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 1.2rem;
     font-weight: 700;
+}
+
+.brand-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.35));
 }
 
 .manager-page .brand {
@@ -104,6 +114,36 @@ a {
     justify-content: center;
 }
 
+.install-banner {
+    position: fixed;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    width: min(100%, 680px);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    z-index: 40;
+}
+
+.install-banner.hidden {
+    display: none !important;
+}
+
+.install-banner__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.install-banner__content p {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+}
+
 button.danger,
 a.danger {
     background: rgba(239, 68, 68, 0.16);
@@ -126,8 +166,8 @@ a.danger:hover {
 }
 
 .icon-button {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     background: rgba(255, 255, 255, 0.08);
     color: var(--text);
     position: relative;
@@ -139,6 +179,15 @@ a.danger:hover {
     margin-left: 0.5rem;
     font-size: 0.9rem;
     color: var(--text);
+}
+
+.icon-button i,
+.tab-button i,
+.actions button i,
+.actions a i,
+.notification-toast__icon,
+.notification-entry__icon {
+    font-size: 1.1rem;
 }
 
 /* Compact mode: only show icons, reduce padding */
@@ -1129,9 +1178,8 @@ tr:hover {
 }
 
 .tab-button {
-    width: 42px;
-    height: 42px;
-    padding: 0;
+    width: 46px;
+    height: 46px;
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.04);
@@ -1151,8 +1199,14 @@ tr:hover {
 }
 
 .tab-button i {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     line-height: 1;
+}
+
+.match-action-button,
+.icon-button,
+.tab-button {
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .tab-button:hover {
@@ -1526,7 +1580,6 @@ tr:hover {
     #tournamentsTable,
     .manager-table,
     .dashboard-table {
-        min-width: 0;
         width: 100%;
         font-size: 0.84rem;
     }
@@ -1547,6 +1600,10 @@ tr:hover {
 
     .panel {
         padding: 0.75rem;
+    }
+
+    #tournamentsTable td.actions::before {
+        content: '';
     }
 
     .actions button,
@@ -1752,6 +1809,85 @@ tr:hover {
         table-layout: auto;
     }
 
+    #tournamentsTable {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 0.45rem;
+    }
+
+    #tournamentsTable thead {
+        display: none;
+    }
+
+    #tournamentsTable tbody {
+        display: block;
+        width: 100%;
+    }
+
+    #tournamentsTable tr {
+        display: block;
+        width: 100%;
+        padding: 0.7rem;
+        margin-bottom: 0.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 0.9rem;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    #tournamentsTable td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.28rem 0;
+        border: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    #tournamentsTable td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    #tournamentsTable td.name {
+        display: block;
+    }
+
+    #tournamentsTable td.actions {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.3rem;
+        margin-top: 0.35rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #tournamentsTable td.name {
+        margin-bottom: 0.35rem;
+    }
+
+    #tournamentsTable .actions button {
+        margin: 0;
+        flex-shrink: 0;
+        min-width: 38px;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+        opacity: 1;
+    }
+
     .manager-table,
     .dashboard-table {
         display: table;
@@ -1769,6 +1905,19 @@ tr:hover {
         white-space: normal;
         line-height: 1.32;
         word-break: break-word;
+    }
+
+    #tournamentsTable th,
+    #tournamentsTable td {
+        padding: 0.42rem 0.35rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #tournamentsTable .actions {
+        white-space: nowrap;
+        width: auto;
     }
 
     .dashboard-table th:nth-child(2),
