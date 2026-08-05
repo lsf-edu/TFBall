@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0ea5e9" />
     <title>TFBall - Gestion de Tournois</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -12,7 +15,7 @@
 
 <body>
     <header class="topbar">
-        <div class="brand">TFBall Manager</div>
+        <div class="brand"><img src="favicon.svg" alt="TFBall logo" class="brand-logo" />TFBall</div>
         <div class="actions">
             <button id="notificationButton" class="icon-button" title="Notifications">
                 <i class="fa-solid fa-bell" aria-hidden="true"></i>
@@ -281,6 +284,16 @@
                     <i class="fa-solid fa-save" aria-hidden="true"></i>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div class="install-banner hidden" id="installBanner">
+        <div class="install-banner__content">
+            <div>
+                <strong>Installer TFBall</strong>
+                <p>Ajoutez l'application à votre appareil pour un accès plus rapide et hors ligne.</p>
+            </div>
+            <button id="installButton" class="primary">Installer</button>
         </div>
     </div>
 
