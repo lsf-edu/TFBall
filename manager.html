@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manager TFBall</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -12,7 +13,7 @@
 
 <body>
     <header class="topbar">
-        <div class="brand">TFBall Pro Manager</div>
+        <div class="brand"><img src="favicon.svg" alt="TFBall logo" class="brand-logo" />TFBall</div>
         <div class="tab-nav public-tabs" role="tablist" aria-label="Navigation du tournoi">
             <button class="tab-button active" data-tab="overview" role="tab" aria-selected="true"
                 aria-label="Vue d’ensemble" title="Vue d’ensemble">
@@ -142,6 +143,22 @@
                     <span class="team-badge__name">${escapeHtml(teamName)}</span>
                 </span>
             `;
+        }
+
+        function isForfeitMatch(match) {
+            return !!match?.forfeit || !!match?.forfeitBoth;
+        }
+
+        function getMatchStatus(match) {
+            if (isForfeitMatch(match)) return 'Forfait';
+            return typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number' ? 'Terminé' : 'À jouer';
+        }
+
+        function getMatchScoreText(match) {
+            if (isForfeitMatch(match)) return 'Forfait';
+            const homeScore = typeof match.scoreHome === 'number' ? match.scoreHome : '-';
+            const awayScore = typeof match.scoreAway === 'number' ? match.scoreAway : '-';
+            return `${homeScore} - ${awayScore}`;
         }
 
         function buildStandingTag(index, total) {
@@ -324,15 +341,14 @@
                     matches.forEach(match => {
                         const item = document.createElement('div');
                         item.className = 'calendar-match';
-                        const homeScore = typeof match.scoreHome === 'number' ? match.scoreHome : '-';
-                        const awayScore = typeof match.scoreAway === 'number' ? match.scoreAway : '-';
-                        const status = typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number' ? 'Terminé' : 'À jouer';
+                        const scoreText = getMatchScoreText(match);
+                        const status = getMatchStatus(match);
                         item.innerHTML = `
                             <div class="calendar-match__info">
                                 <span class="calendar-match__status">${status}</span>
                                 <span class="calendar-match__teams">
                                     <span>${renderTeamLabel(match.home, tournament)}</span>
-                                    <span class="calendar-match__score">${homeScore} - ${awayScore}</span>
+                                    <span class="calendar-match__score">${scoreText}</span>
                                     <span>${renderTeamLabel(match.away, tournament)}</span>
                                 </span>
                                 <span class="calendar-match__group">${escapeHtml(match.groupName)}</span>
@@ -357,15 +373,14 @@
                     round.matches.forEach(match => {
                         const item = document.createElement('div');
                         item.className = 'calendar-match';
-                        const homeScore = typeof match.scoreHome === 'number' ? match.scoreHome : '-';
-                        const awayScore = typeof match.scoreAway === 'number' ? match.scoreAway : '-';
-                        const status = typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number' ? 'Terminé' : 'À jouer';
+                        const scoreText = getMatchScoreText(match);
+                        const status = getMatchStatus(match);
                         item.innerHTML = `
                             <div class="calendar-match__info">
                                 <span class="calendar-match__status">${status}</span>
                                 <span class="calendar-match__teams">
                                     <span>${renderTeamLabel(match.home, tournament)}</span>
-                                    <span class="calendar-match__score">${homeScore} - ${awayScore}</span>
+                                    <span class="calendar-match__score">${scoreText}</span>
                                     <span>${renderTeamLabel(match.away, tournament)}</span>
                                 </span>
                             </div>
@@ -386,7 +401,7 @@
             const section = document.createElement('div');
             section.className = 'round-section';
             section.innerHTML = '<h4>Résultats</h4>';
-            const playedMatches = (tournament.bracket || []).flatMap(round => (round.matches || []).filter(match => typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number'));
+            const playedMatches = (tournament.bracket || []).flatMap(round => (round.matches || []).filter(match => isForfeitMatch(match) || (typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number')));
             if (!playedMatches.length) {
                 section.innerHTML += '<p>Aucun résultat enregistré pour l’instant.</p>';
                 return section;
@@ -396,11 +411,13 @@
             playedMatches.forEach(match => {
                 const item = document.createElement('div');
                 item.className = 'result-card';
+                const header = isForfeitMatch(match) ? 'Forfait' : 'Résultat final';
+                const scoreText = getMatchScoreText(match);
                 item.innerHTML = `
-                    <div class="result-card__header">Résultat final</div>
+                    <div class="result-card__header">${header}</div>
                     <div class="result-card__teams">
                         <span class="result-card__team">${renderTeamLabel(match.home, tournament)}</span>
-                        <span class="result-card__score">${match.scoreHome} - ${match.scoreAway}</span>
+                        <span class="result-card__score">${scoreText}</span>
                         <span class="result-card__team">${renderTeamLabel(match.away, tournament)}</span>
                     </div>
                 `;
@@ -419,11 +436,12 @@
                 newsItems.push({ title: 'Champion confirmé', detail: `${tournament.champion} a remporté le tournoi.` });
             }
             const matches = (tournament.bracket || []).flatMap(round => (round.matches || []).map(match => ({ ...match, round: round.name })));
-            const playedMatches = matches.filter(match => typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number');
-            const upcomingMatches = matches.filter(match => match.scoreHome == null || match.scoreAway == null);
+            const playedMatches = matches.filter(match => isForfeitMatch(match) || (typeof match.scoreHome === 'number' && typeof match.scoreAway === 'number'));
+            const upcomingMatches = matches.filter(match => !isForfeitMatch(match) && (match.scoreHome == null || match.scoreAway == null));
             if (playedMatches.length) {
                 const latest = playedMatches[playedMatches.length - 1];
-                newsItems.push({ title: 'Dernier résultat', detail: `${latest.home} ${latest.scoreHome}-${latest.scoreAway} ${latest.away}` });
+                const detail = isForfeitMatch(latest) ? `${latest.home} vs ${latest.away} : Forfait` : `${latest.home} ${latest.scoreHome}-${latest.scoreAway} ${latest.away}`;
+                newsItems.push({ title: 'Dernier résultat', detail });
             }
             if (upcomingMatches.length) {
                 const nextMatch = upcomingMatches[0];
