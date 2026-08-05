@@ -8,7 +8,7 @@ let modalState, notificationButton, notificationBadge, notificationList, openCre
 let closeButtons, teamInputs, teamCount, tournamentForm, resetButton, tournamentsTable;
 let notificationEntries = [];
 let tournamentType, statusFilter, refreshButton, summaryContent, summaryModalContent, championText, drawMethod, dashboardShell, dashboardBody, tabButtons, selectedTournament;
-let manualScoreModal, manualScoreForm, manualScoreHome, manualScoreAway, manualPenaltyHome, manualPenaltyAway, manualScoreInfo, manualPlayersHomeContainer, manualPlayersAwayContainer, currentManualMatch, currentManualTournament, manualBothForfeit, globalSearch, statsButton, exportImgButton, helpButton, statsChartInstance;
+let manualScoreModal, manualScoreForm, manualScoreHome, manualScoreAway, manualPenaltyHome, manualPenaltyAway, manualScoreInfo, manualPlayersHomeContainer, manualPlayersAwayContainer, currentManualMatch, currentManualTournament, manualBothForfeit, globalSearch, statsButton, exportImgButton, helpButton, installBanner, installButton, deferredPrompt, statsChartInstance;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -200,6 +200,48 @@ function collectTournamentMatches(tournament) {
     }
     allMatches.push(...((tournament.bracket || []).flatMap(round => round.matches || [])));
     return allMatches;
+}
+
+function collectPlayerTotalsFromMatches(tournament) {
+    const totals = new Map();
+    const addPlayer = (teamName, player) => {
+        if (!player || !player.name) return;
+        const name = String(player.name).trim() || 'Joueur';
+        const team = String(teamName || 'Equipe').trim() || 'Équipe';
+        const key = `${team}||${name}`;
+        const entry = totals.get(key) || { name, team, goals: 0, assists: 0 };
+        entry.goals += Number(player.goals) || 0;
+        entry.assists += Number(player.assists) || 0;
+        totals.set(key, entry);
+    };
+
+    collectTournamentMatches(tournament).forEach(match => {
+        (match.homePlayers || []).forEach(player => addPlayer(match.home, player));
+        (match.awayPlayers || []).forEach(player => addPlayer(match.away, player));
+    });
+
+    return Array.from(totals.values());
+}
+
+function getPlayerTotals(tournament) {
+    const matchTotals = collectPlayerTotalsFromMatches(tournament);
+    if (matchTotals.length) {
+        return matchTotals;
+    }
+
+    const totals = [];
+    const teamPlayers = tournament.teamPlayers || {};
+    Object.entries(teamPlayers).forEach(([teamName, roster]) => {
+        (roster || []).forEach(player => {
+            totals.push({
+                name: player.name || 'Joueur',
+                team: teamName,
+                goals: Number(player.goals) || 0,
+                assists: Number(player.assists) || 0,
+            });
+        });
+    });
+    return totals;
 }
 
 function hasAllMatchesPlayed(tournament) {
@@ -1705,21 +1747,7 @@ function renderTopScorers(tournament) {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = '<h3>Meilleurs buteurs</h3>';
 
-    const players = [];
-    const teamPlayers = tournament.teamPlayers || {};
-
-    Object.entries(teamPlayers).forEach(([teamName, roster]) => {
-        (roster || []).forEach(player => {
-            if (Number(player.goals) > 0) {
-                players.push({
-                    name: player.name || 'Joueur',
-                    team: teamName,
-                    goals: Number(player.goals) || 0,
-                });
-            }
-        });
-    });
-
+    const players = getPlayerTotals(tournament).filter(player => player.goals > 0);
     const sorted = players.sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
 
     if (!sorted.length) {
@@ -1754,21 +1782,7 @@ function renderTopAssists(tournament) {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = '<h3>Meilleurs passeurs</h3>';
 
-    const players = [];
-    const teamPlayers = tournament.teamPlayers || {};
-
-    Object.entries(teamPlayers).forEach(([teamName, roster]) => {
-        (roster || []).forEach(player => {
-            if (Number(player.assists) > 0) {
-                players.push({
-                    name: player.name || 'Joueur',
-                    team: teamName,
-                    assists: Number(player.assists) || 0,
-                });
-            }
-        });
-    });
-
+    const players = getPlayerTotals(tournament).filter(player => player.assists > 0);
     const sorted = players.sort((a, b) => b.assists - a.assists || a.name.localeCompare(b.name));
 
     if (!sorted.length) {
@@ -2009,11 +2023,11 @@ function renderTournamentRows(tournaments) {
         }
         const row = document.createElement('tr');
         row.innerHTML = `
-      <td class="name">${renderTournamentBadge(tournament)}</td>
-      <td class="type">${tournament.type}</td>
-      <td class="teams">${tournament.teams.length}</td>
-      <td class="status"></td>
-      <td class="actions"></td>
+      <td class="name" data-label="Nom">${renderTournamentBadge(tournament)}</td>
+      <td class="type" data-label="Type">${tournament.type}</td>
+      <td class="teams" data-label="Équipes">${tournament.teams.length}</td>
+      <td class="status" data-label="Statut"></td>
+      <td class="actions" data-label="Actions"></td>
     `;
         row.querySelector('.status').appendChild(makeStatusBadge(tournament.status));
         const actionsCell = row.querySelector('.actions');
@@ -2165,10 +2179,42 @@ function attachEventListeners() {
     });
     helpButton?.addEventListener('click', () => showHelpTour());
     tabButtons.forEach(button => button.addEventListener('click', () => setActiveTab(button.dataset.tab)));
+    installButton?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+            showNotification('Installation acceptée.', 'success');
+        } else {
+            showNotification('Installation non acceptée.', 'info');
+        }
+        deferredPrompt = null;
+        installBanner?.classList.add('hidden');
+    });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             Object.keys(modalState).forEach(key => hideModal(key));
         }
+    });
+}
+
+function setupPWA() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(() => console.log('Service worker enregistré.'))
+            .catch(error => console.warn('Échec de l’enregistrement du service worker.', error));
+    }
+
+    window.addEventListener('beforeinstallprompt', event => {
+        event.preventDefault();
+        deferredPrompt = event;
+        installBanner?.classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        showNotification('TFBall a été installé.', 'success');
+        deferredPrompt = null;
+        installBanner?.classList.add('hidden');
     });
 }
 
@@ -2242,7 +2288,10 @@ async function init() {
     manualPlayersHomeContainer = document.getElementById('homePlayersContainer');
     manualPlayersAwayContainer = document.getElementById('awayPlayersContainer');
     manualBothForfeit = document.getElementById('manualBothForfeit');
+    installBanner = document.getElementById('installBanner');
+    installButton = document.getElementById('installButton');
     attachEventListeners();
+    setupPWA();
     updateTeamInputs();
     await refreshList();
     showNotification('Bienvenue dans TFBall Manager. Cliquez sur la cloche pour lire les notifications.');
